@@ -361,16 +361,4 @@ We welcome contributions\! If you'd like to contribute, please follow these step
 
 This project is licensed under the MIT License - see the `LICENSE` file for details.
 
-## 🙏 Acknowledgments
-
-  - The **ARGO Program** for their invaluable global ocean observation data.
-  - The **FastAPI** and **React** communities for providing excellent frameworks and comprehensive documentation.
-  - **Tailwind CSS** for empowering rapid and responsive UI development.
-  - The broader **Oceanographic Research Community** for advancing our understanding of the oceans and establishing critical data standards.
-
------
-
-**FloatChat** - Making ocean data exploration accessible and intuitive through conversational AI and powerful visualizations.
-
-```
-```
+----
