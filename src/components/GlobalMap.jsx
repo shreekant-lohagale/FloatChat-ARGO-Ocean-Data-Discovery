@@ -332,7 +332,7 @@ const GlobalMap = () => {
       )}
 
       {/* Region Summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         <div className="bg-white rounded-lg p-3 sm:p-4 border">
           <h3 className="font-semibold text-base sm:text-lg mb-2 sm:mb-3">{currentRegion.name} Summary</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
