@@ -1,11 +1,11 @@
 import React, { useState, useCallback } from 'react';
-import { argoData } from '../data/argoData';
 
 const GlobalMap = () => {
   const [selectedRegion, setSelectedRegion] = useState('indianOcean');
   const [selectedFloat, setSelectedFloat] = useState(null);
-  const [mapView, setMapView] = useState('map'); // 'map' or 'satellite'
+  const [mapView, setMapView] = useState('map');
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const regions = {
     indianOcean: {
@@ -45,7 +45,6 @@ const GlobalMap = () => {
 
   const currentRegion = regions[selectedRegion];
 
-  // Convert coordinates to map position
   const getFloatPosition = (lat, lon) => {
     const x = ((lon + 180) % 360) / 360 * 100;
     const y = (90 - lat) / 180 * 100;
@@ -64,12 +63,19 @@ const GlobalMap = () => {
     setZoomLevel(prev => Math.max(prev - 0.5, 0.5));
   };
 
+  const handleRegionChange = (region) => {
+    setSelectedRegion(region);
+    setSelectedFloat(null);
+    setIsMobileMenuOpen(false);
+  };
+
+  // Responsive FloatMarker component
   const FloatMarker = ({ float, isSelected }) => {
     const position = getFloatPosition(float.lat, float.lon);
     
     return (
       <div 
-        className={`absolute w-6 h-6 rounded-full border-2 border-white cursor-pointer transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 ${
+        className={`absolute w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-full border-2 border-white cursor-pointer transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 ${
           isSelected 
             ? 'bg-red-600 scale-150 z-10 shadow-lg' 
             : 'bg-red-500 hover:scale-125 hover:bg-red-400'
@@ -85,11 +91,11 @@ const GlobalMap = () => {
           {float.id}
         </div>
         
-        {/* Tooltip for selected float */}
+        {/* Responsive Tooltip */}
         {isSelected && (
-          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 bg-white rounded-lg shadow-xl p-3 z-20">
-            <div className="text-sm font-semibold text-gray-800">Float #{float.id}</div>
-            <div className="text-xs text-gray-600 mb-2">{float.region}</div>
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-40 sm:w-48 bg-white rounded-lg shadow-xl p-2 sm:p-3 z-20">
+            <div className="text-xs sm:text-sm font-semibold text-gray-800">Float #{float.id}</div>
+            <div className="text-xs text-gray-600 mb-1 sm:mb-2">{float.region}</div>
             <div className="grid grid-cols-2 gap-1 text-xs">
               <div>Temp:</div><div className="font-semibold">{float.temp}°C</div>
               <div>Salinity:</div><div className="font-semibold">{float.salinity} PSU</div>
@@ -102,12 +108,11 @@ const GlobalMap = () => {
     );
   };
 
-  // Simple map background component
+  // Responsive MapBackground
   const MapBackground = () => {
     if (mapView === 'satellite') {
       return (
         <div className="absolute inset-0 bg-gradient-to-br from-blue-900 via-blue-700 to-blue-900">
-          {/* Simulated satellite view with depth variations */}
           <div className="absolute inset-0 opacity-30">
             <div className="absolute w-full h-full" style={{
               backgroundImage: `radial-gradient(circle at 20% 50%, rgba(34, 197, 94, 0.3) 0%, transparent 50%),
@@ -118,10 +123,8 @@ const GlobalMap = () => {
       );
     }
 
-    // Default map view
     return (
       <div className="absolute inset-0 bg-gradient-to-br from-blue-400 via-blue-300 to-blue-500">
-        {/* Grid lines */}
         <div className="absolute inset-0 opacity-20">
           <div className="absolute inset-0" style={{
             backgroundImage: `linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px),
@@ -130,9 +133,7 @@ const GlobalMap = () => {
           }}></div>
         </div>
         
-        {/* Continent outlines (simplified) */}
         <div className="absolute inset-0">
-          {/* Simplified land masses */}
           <div className="absolute w-1/4 h-1/3 top-1/4 left-1/4 bg-green-100 opacity-20 rounded-lg"></div>
           <div className="absolute w-1/6 h-1/4 top-1/3 left-2/3 bg-green-100 opacity-20 rounded-lg"></div>
         </div>
@@ -140,23 +141,84 @@ const GlobalMap = () => {
     );
   };
 
+  // Mobile menu component
+  const MobileMenu = () => (
+    <div className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-50">
+      <div className="absolute right-0 top-0 h-full w-64 bg-white shadow-xl">
+        <div className="p-4 border-b">
+          <div className="flex justify-between items-center">
+            <h3 className="font-bold">Map Controls</h3>
+            <button 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="p-2 text-gray-500"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+        <div className="p-4 space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">View Type</label>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setMapView('map')}
+                className={`flex-1 px-3 py-2 rounded text-sm font-medium ${
+                  mapView === 'map' ? 'bg-blue-500 text-white' : 'bg-gray-200'
+                }`}
+              >
+                Map
+              </button>
+              <button
+                onClick={() => setMapView('satellite')}
+                className={`flex-1 px-3 py-2 rounded text-sm font-medium ${
+                  mapView === 'satellite' ? 'bg-blue-500 text-white' : 'bg-gray-200'
+                }`}
+              >
+                Satellite
+              </button>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Region</label>
+            <select 
+              value={selectedRegion}
+              onChange={(e) => handleRegionChange(e.target.value)}
+              className="w-full border rounded px-3 py-2 text-sm"
+            >
+              <option value="indianOcean">Indian Ocean</option>
+              <option value="pacificOcean">Pacific Ocean</option>
+              <option value="atlanticOcean">Atlantic Ocean</option>
+            </select>
+          </div>
+          <div className="pt-4 border-t">
+            <button className="w-full bg-blue-500 text-white py-2 rounded text-sm">
+              Download Data
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
+      {/* Mobile Menu */}
+      {isMobileMenuOpen && <MobileMenu />}
+
       {/* Header with Controls */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+      <div className="flex flex-col lg:flex-row justify-between items-start gap-3 sm:gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">Interactive Global Map</h2>
-          <p className="text-gray-600">Real-time ARGO float monitoring and data visualization</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Interactive Global Map</h2>
+          <p className="text-gray-600 text-sm sm:text-base">Real-time ARGO float monitoring</p>
         </div>
         
-        <div className="flex flex-col sm:flex-row gap-3">
+        {/* Desktop Controls */}
+        <div className="hidden lg:flex gap-3">
           <div className="flex gap-2">
             <button
               onClick={() => setMapView('map')}
               className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                mapView === 'map' 
-                  ? 'bg-blue-500 text-white' 
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                mapView === 'map' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
               }`}
             >
               Map View
@@ -164,9 +226,7 @@ const GlobalMap = () => {
             <button
               onClick={() => setMapView('satellite')}
               className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                mapView === 'satellite' 
-                  ? 'bg-blue-500 text-white' 
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                mapView === 'satellite' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
               }`}
             >
               Satellite
@@ -175,42 +235,50 @@ const GlobalMap = () => {
           
           <select 
             value={selectedRegion}
-            onChange={(e) => setSelectedRegion(e.target.value)}
-            className="border rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-blue-500"
+            onChange={(e) => handleRegionChange(e.target.value)}
+            className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
           >
             <option value="indianOcean">Indian Ocean</option>
             <option value="pacificOcean">Pacific Ocean</option>
             <option value="atlanticOcean">Atlantic Ocean</option>
           </select>
         </div>
+
+        {/* Mobile Controls Button */}
+        <button 
+          onClick={() => setIsMobileMenuOpen(true)}
+          className="lg:hidden bg-blue-500 text-white px-4 py-2 rounded-lg text-sm"
+        >
+          Map Controls
+        </button>
       </div>
 
-      {/* Map Container with Controls */}
-      <div className="bg-white rounded-xl border-2 border-gray-200 h-96 relative overflow-hidden">
+      {/* Map Container */}
+      <div className="bg-white rounded-lg sm:rounded-xl border-2 border-gray-200 h-64 sm:h-80 md:h-96 relative overflow-hidden">
         <MapBackground />
         
-        {/* Zoom Controls */}
-        <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg p-2 z-10">
-          <div className="flex flex-col gap-2">
+        {/* Zoom Controls - Responsive positioning */}
+        <div className="absolute top-2 right-2 sm:top-4 sm:right-4 bg-white rounded-lg shadow-lg p-1 sm:p-2 z-10">
+          <div className="flex flex-col gap-1 sm:gap-2">
             <button 
               onClick={handleZoomIn}
-              className="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-md"
+              className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-md text-sm sm:text-base"
             >
-              <span className="text-lg font-bold">+</span>
+              +
             </button>
             <button 
               onClick={handleZoomOut}
-              className="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-md"
+              className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-md text-sm sm:text-base"
             >
-              <span className="text-lg font-bold">-</span>
+              -
             </button>
           </div>
         </div>
 
         {/* Map Title */}
-        <div className="absolute top-4 left-4 bg-black bg-opacity-50 text-white px-3 py-2 rounded-lg z-10">
+        <div className="absolute top-2 left-2 sm:top-4 sm:left-4 bg-black bg-opacity-50 text-white px-2 py-1 sm:px-3 sm:py-2 rounded text-xs sm:text-sm z-10">
           <div className="font-semibold">{currentRegion.name}</div>
-          <div className="text-xs opacity-75">{currentRegion.floats.length} Active Floats</div>
+          <div className="opacity-75">{currentRegion.floats.length} Active Floats</div>
         </div>
 
         {/* Float Markers */}
@@ -225,83 +293,83 @@ const GlobalMap = () => {
         </div>
 
         {/* Coordinates Display */}
-        <div className="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded text-xs">
-          Zoom: {zoomLevel.toFixed(1)}x • {mapView === 'satellite' ? 'Satellite View' : 'Map View'}
+        <div className="absolute bottom-2 left-2 sm:bottom-4 sm:left-4 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
+          Zoom: {zoomLevel.toFixed(1)}x
         </div>
       </div>
 
       {/* Selected Float Details */}
       {selectedFloat && (
-        <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg p-4 border border-blue-200">
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="font-bold text-lg text-blue-800">Float #{selectedFloat.id} Details</h3>
+        <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg p-3 sm:p-4 border border-blue-200">
+          <div className="flex justify-between items-center mb-2 sm:mb-3">
+            <h3 className="font-bold text-base sm:text-lg text-blue-800">Float #{selectedFloat.id} Details</h3>
             <button 
               onClick={() => setSelectedFloat(null)}
-              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+              className="text-blue-600 hover:text-blue-800 text-xs sm:text-sm font-medium"
             >
               Close
             </button>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center bg-white rounded p-3 shadow-sm">
-              <div className="text-2xl font-bold text-blue-600">{selectedFloat.temp}°C</div>
-              <div className="text-sm text-gray-600">Temperature</div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
+            <div className="text-center bg-white rounded p-2 sm:p-3 shadow-sm">
+              <div className="text-lg sm:text-2xl font-bold text-blue-600">{selectedFloat.temp}°C</div>
+              <div className="text-xs sm:text-sm text-gray-600">Temperature</div>
             </div>
-            <div className="text-center bg-white rounded p-3 shadow-sm">
-              <div className="text-2xl font-bold text-green-600">{selectedFloat.salinity} PSU</div>
-              <div className="text-sm text-gray-600">Salinity</div>
+            <div className="text-center bg-white rounded p-2 sm:p-3 shadow-sm">
+              <div className="text-lg sm:text-2xl font-bold text-green-600">{selectedFloat.salinity} PSU</div>
+              <div className="text-xs sm:text-sm text-gray-600">Salinity</div>
             </div>
-            <div className="text-center bg-white rounded p-3 shadow-sm">
-              <div className="text-2xl font-bold text-purple-600">{selectedFloat.depth}m</div>
-              <div className="text-sm text-gray-600">Depth</div>
+            <div className="text-center bg-white rounded p-2 sm:p-3 shadow-sm">
+              <div className="text-lg sm:text-2xl font-bold text-purple-600">{selectedFloat.depth}m</div>
+              <div className="text-xs sm:text-sm text-gray-600">Depth</div>
             </div>
-            <div className="text-center bg-white rounded p-3 shadow-sm">
-              <div className="text-2xl font-bold text-orange-600">{selectedFloat.lastUpdate}</div>
-              <div className="text-sm text-gray-600">Last Update</div>
+            <div className="text-center bg-white rounded p-2 sm:p-3 shadow-sm">
+              <div className="text-lg sm:text-2xl font-bold text-orange-600">{selectedFloat.lastUpdate}</div>
+              <div className="text-xs sm:text-sm text-gray-600">Last Update</div>
             </div>
           </div>
         </div>
       )}
 
       {/* Region Summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg p-4 border col-span-2">
-          <h3 className="font-semibold text-lg mb-3">{currentRegion.name} Summary</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="bg-white rounded-lg p-3 sm:p-4 border">
+          <h3 className="font-semibold text-base sm:text-lg mb-2 sm:mb-3">{currentRegion.name} Summary</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{currentRegion.floats.length}</div>
-              <div className="text-sm text-gray-600">Active Floats</div>
+              <div className="text-xl sm:text-2xl font-bold text-blue-600">{currentRegion.floats.length}</div>
+              <div className="text-xs sm:text-sm text-gray-600">Active Floats</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-xl sm:text-2xl font-bold text-green-600">
                 {(currentRegion.floats.reduce((sum, f) => sum + f.temp, 0) / currentRegion.floats.length).toFixed(1)}°C
               </div>
-              <div className="text-sm text-gray-600">Avg Temperature</div>
+              <div className="text-xs sm:text-sm text-gray-600">Avg Temperature</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">
+              <div className="text-xl sm:text-2xl font-bold text-purple-600">
                 {(currentRegion.floats.reduce((sum, f) => sum + f.salinity, 0) / currentRegion.floats.length).toFixed(1)} PSU
               </div>
-              <div className="text-sm text-gray-600">Avg Salinity</div>
+              <div className="text-xs sm:text-sm text-gray-600">Avg Salinity</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">{currentRegion.floats.length * 12}</div>
-              <div className="text-sm text-gray-600">Data Points</div>
+              <div className="text-xl sm:text-2xl font-bold text-orange-600">{currentRegion.floats.length * 12}</div>
+              <div className="text-xs sm:text-sm text-gray-600">Data Points</div>
             </div>
           </div>
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-white rounded-lg p-4 border">
-          <h3 className="font-semibold text-lg mb-3">Quick Actions</h3>
+        <div className="bg-white rounded-lg p-3 sm:p-4 border lg:col-span-1">
+          <h3 className="font-semibold text-base sm:text-lg mb-2 sm:mb-3">Quick Actions</h3>
           <div className="space-y-2">
-            <button className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm">
+            <button className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors text-xs sm:text-sm">
               Download Region Data
             </button>
-            <button className="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors text-sm">
+            <button className="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors text-xs sm:text-sm">
               Generate Report
             </button>
-            <button className="w-full bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition-colors text-sm">
+            <button className="w-full bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition-colors text-xs sm:text-sm">
               Compare with Previous Year
             </button>
           </div>
@@ -309,17 +377,17 @@ const GlobalMap = () => {
       </div>
 
       {/* Float List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {currentRegion.floats.map((float) => (
           <div 
             key={float.id} 
-            className={`bg-white rounded-lg p-4 border hover:shadow-md transition-all cursor-pointer ${
+            className={`bg-white rounded-lg p-3 border hover:shadow-md transition-all cursor-pointer ${
               selectedFloat?.id === float.id ? 'ring-2 ring-blue-500 bg-blue-50' : ''
             }`}
             onClick={() => handleFloatClick(float)}
           >
             <div className="flex justify-between items-center mb-2">
-              <span className="font-semibold text-blue-700">Float #{float.id}</span>
+              <span className="font-semibold text-blue-700 text-sm sm:text-base">Float #{float.id}</span>
               <span className={`text-xs px-2 py-1 rounded ${
                 float.lastUpdate.includes('hour') ? 'bg-green-100 text-green-800' :
                 float.lastUpdate.includes('day') ? 'bg-yellow-100 text-yellow-800' :
@@ -328,10 +396,10 @@ const GlobalMap = () => {
                 {float.lastUpdate}
               </span>
             </div>
-            <div className="grid grid-cols-2 gap-2 text-sm">
+            <div className="grid grid-cols-2 gap-2 text-xs sm:text-sm">
               <div>
                 <span className="text-gray-600">Location:</span>
-                <div className="font-semibold">{float.region}</div>
+                <div className="font-semibold truncate">{float.region}</div>
               </div>
               <div>
                 <span className="text-gray-600">Coordinates:</span>
